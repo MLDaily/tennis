@@ -7,20 +7,18 @@ from decimal import *
 alpha = 0.01
 e = 2.718281828459045235
 
-x = pd.read_csv('Data/AusOpen-men-2013.csv',usecols=['Round','FNL1','FNL2','FSP.1',\
+x = pd.read_csv('subtrain.csv',usecols=['Round','FNL1','FNL2','FSP.1',\
 	'FSW.1','SSP.1','SSW.1','ACE.1','DBF.1','WNR.1','UFE.1','BPC.1','BPW.1','NPA.1','NPW.1','TPW.1',\
 	'ST1.1','ST2.1','ST3.1','ST4.1','ST5.1','FSP.2','FSW.2','SSP.2','SSW.2','ACE.2','DBF.2','WNR.2',\
 	'UFE.2','BPC.2','BPW.2','NPA.2','NPW.2','TPW.2','ST1.2','ST2.2','ST3.2','ST4.2','ST5.2'])
 
-x2 = pd.read_csv('Data/FrenchOpen-men-2013.csv',usecols=['Round','FNL1','FNL2','FSP.1',\
+x2 = pd.read_csv('subtest.csv',usecols=['Round','FNL1','FNL2','FSP.1',\
 	'FSW.1','SSP.1','SSW.1','ACE.1','DBF.1','WNR.1','UFE.1','BPC.1','BPW.1','NPA.1','NPW.1','TPW.1',\
 	'ST1.1','ST2.1','ST3.1','ST4.1','ST5.1','FSP.2','FSW.2','SSP.2','SSW.2','ACE.2','DBF.2','WNR.2',\
 	'UFE.2','BPC.2','BPW.2','NPA.2','NPW.2','TPW.2','ST1.2','ST2.2','ST3.2','ST4.2','ST5.2'])
 
-y = pd.read_csv('Data/AusOpen-men-2013.csv',usecols=['Result'])
-y2 = pd.read_csv('Data/FrenchOpen-men-2013.csv',usecols=['Result'])
-
-
+y = pd.read_csv('subtrain.csv',usecols=['Result'])
+y2 = pd.read_csv('subtest.csv',usecols=['Result'])
 
 m = x.shape[0]
 
@@ -84,13 +82,14 @@ def descent(theta):
 
 if __name__ == '__main__':
 	theta = np.ones(x.shape[1])
-	for i in range(1000):
+	for i in range(500):
 		theta = descent(theta)
 	print cost(theta), theta
 	s = 0
+	m = x2.shape[0]
 	for i in range(m):
 		hyp = hypothesis(x,i,theta)
 		yi = y2[i:i+1].values[0]
-		print int(hyp), y2[i:i+1]
+		# print int(hyp), yi,i
 		s += abs(int(hyp) - yi)
-	print s, m
+	print float(s)/float(m), m
