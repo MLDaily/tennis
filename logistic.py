@@ -13,7 +13,7 @@ x = pd.read_csv('Data/AusOpen-men-2013.csv',usecols=['Round','FNL1','FNL2','FSP.
 
 y = pd.read_csv('Data/AusOpen-men-2013.csv',usecols=['Result'])
 
-theta = np.ones(x.shape[1])
+
 
 m = x.shape[0]
 
@@ -25,7 +25,7 @@ def sigmoid(z):
 
 	return z
 
-def hypothesis(x,i):
+def hypothesis(x,i,theta):
 
 	xi = x[i:i+1].values[0]
 	tran = np.transpose(theta)
@@ -38,7 +38,7 @@ def hypothesis(x,i):
 	# time.sleep(2)
 	return sigmoid(z)
 
-def cost_function():
+def cost_function(theta):
 
 	J = 0
 
@@ -46,20 +46,21 @@ def cost_function():
 
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
-		hyp = hypothesis(x,i)
+		hyp = hypothesis(x,i,theta)
 		# print hyp
 
-		a = np.multiply( np.log(hyp), yi)
+		a = np.multiply( np.log10(hyp), yi)
+		b = np.multiply( (1-yi), np.log10( np.subtract( 1, hyp ) ) )
 
-		b = np.multiply( 1-yi, np.log( np.subtract( 1, hyp ) ) )
-		# print np.subtract( 1, hyp
+		# print a
+		# time.sleep(2)
+
 		c = np.add(a,b)
-
 		J += np.divide(c,m)
 
 	return J
 
-def descent():
+def descent(theta):
 	
 	l = np.zeros(x.shape[1])
 
@@ -67,16 +68,17 @@ def descent():
 
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
-		hyp = hypothesis(x,i)
+		hyp = hypothesis(x,i,theta)
 		k = np.subtract( hyp, yi )
 		l = np.add(l, np.multiply( k, xi ))
 
-	print theta, l
+	l = np.multiply(alpha,l)
 
 	theta = np.subtract(theta,l) 
 
 	return theta
 
 if __name__ == '__main__':
-	print descent()
-	print cost_function()
+	theta = np.ones(x.shape[1])
+	print descent(theta)
+	print cost_function(theta)
