@@ -35,7 +35,7 @@ def hypothesis(x,i,theta):
 	xi = x[i:i+1].values[0]
 	tran = np.transpose(theta)
 
-	# print theta, tran, xi, np.dot(tran,xi)
+	# print xi, i
 	# time.sleep(2)
 
 	z = np.dot(tran,xi)
@@ -52,13 +52,15 @@ def cost(theta):
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
 		hyp = hypothesis(x,i,theta)
-		# print hyp
+		# print np.log(1-hyp) * (1-yi), yi, np.log( hyp ) * yi
 
-		a = np.multiply( np.log10(hyp), yi)
-		b = np.multiply( (1-yi), np.log10( np.subtract( 1, hyp ) ) )
+		if yi != 0:
+			a = np.multiply( np.log( hyp ), yi)
+		else:
+			a = np.multiply( (1-yi), np.log( 1-hyp ) )
 
-		c = np.add(a,b)
-		J += np.divide(c,m)
+		J += np.divide(a,m)
+		# print J
 
 	return J
 
@@ -67,24 +69,26 @@ def descent(theta):
 	l = np.zeros(x.shape[1],dtype=float)
 
 	for i in range(m):
-
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
 		hyp = hypothesis(x,i,theta)
+
 		k = np.subtract( hyp, yi )
 		l = np.add(l, np.multiply( k, xi ))
 		l = np.multiply(alpha,l)
-	
-
+		# print hyp,k,l
+	# time.sleep(10)
 	theta = np.subtract(theta,l) 
 
 	return theta
 
 if __name__ == '__main__':
 	theta = np.ones(x.shape[1])
-	for i in range(500):
-		theta = descent(theta)
-	print cost(theta), theta
+	for i in range(100):
+		prev = cost(theta)
+		while prev < cost(theta):
+			theta = descent(theta)
+		print cost(theta)
 	s = 0
 	m = x2.shape[0]
 	for i in range(m):
