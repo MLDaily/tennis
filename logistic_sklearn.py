@@ -25,11 +25,19 @@ clf.fit(x, y)
 # Predict
 y_pred = clf.predict_proba(x2)[:,1]
 
+def absolute(z):
+	if z > 0.5:
+		return 1
+	return 0
 
 def sigmoid(z):
 	z = 1/(1+np.power(e,-z))
 	return z
 
-for i in range(len(y_pred)):
-	print y2[i:i+1], y_pred[i]
+m = len(y_pred)
 
+s=0
+for i in range(len(y_pred)):
+	s += abs(absolute(y_pred[i]) - y2[i:i+1].values[0])
+
+print float(s)/float(m), m
