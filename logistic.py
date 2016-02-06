@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import math
 import time
-from decimal import *
 
 alpha = 0.01
 e = 2.718281828459045235
@@ -22,25 +21,22 @@ y2 = pd.read_csv('subtest.csv',usecols=['Result'])
 
 m = x.shape[0]
 
+def absolute(z):
+	if z > 0.5:
+		return 1
+	return 0
+
 def sigmoid(z):
-	# for v in range(len(z)):
-	# 	z[v] = 1/(1+np.power(e,-z[v]))
-
-	z = 1/(1+np.power(e,-z))
-
+	z = 1/(1+math.exp(-1.0*z))
 	return z
 
-def hypothesis(x,i,theta):
+def hypothesis(xi,theta):
 
-	xi = x[i:i+1].values[0]
-	tran = np.transpose(theta)
-
-	# print xi, i
-	# time.sleep(2)
-
-	z = np.dot(tran,xi)
-	# print z
-	# time.sleep(2)
+	z = 0
+	for i in xrange(len(theta)):
+		z += xi[i] * theta[i]
+		# print xi[i], theta[i], z
+	
 	return sigmoid(z)
 
 def cost(theta):
@@ -51,16 +47,14 @@ def cost(theta):
 
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
-		hyp = hypothesis(x,i,theta)
-		# print np.log(1-hyp) * (1-yi), yi, np.log( hyp ) * yi
+		hyp = hypothesis(xi,theta)
 
-		if yi != 0:
-			a = np.multiply( np.log( hyp ), yi)
+		if yi == 1:
+			a =  math.log( hyp ) * yi
 		else:
-			a = np.multiply( (1-yi), np.log( 1-hyp ) )
+			a =  (1-yi) * math.log( 1-hyp )
 
-		J += np.divide(a,m)
-		# print J
+		J +=  (a / m) 
 
 	return J
 
@@ -71,29 +65,46 @@ def descent(theta):
 	for i in range(m):
 		yi = y[i:i+1].values[0]
 		xi = x[i:i+1].values[0]
-		hyp = hypothesis(x,i,theta)
+		hyp = hypothesis(xi,theta)
 
 		k = np.subtract( hyp, yi )
 		l = np.add(l, np.multiply( k, xi ))
 		l = np.multiply(alpha,l)
-		# print hyp,k,l
-	# time.sleep(10)
-	theta = np.subtract(theta,l) 
+	
+	theta = np.subtract(theta,l)
 
 	return theta
 
 if __name__ == '__main__':
-	theta = np.ones(x.shape[1])
-	for i in range(100):
+	theta = np.zeros(x.shape[1])
+	prev = cost(theta)
+	print prev
+	theta = descent(theta)
+	# print theta
+
+	i = 0
+	while prev != cost(theta):
 		prev = cost(theta)
-		while prev < cost(theta):
-			theta = descent(theta)
-		print cost(theta)
+		
+		theta = descent(theta)
+		
+		i+=1
+		if i%100 == 0:
+			print cost(theta)
+	
+	# print theta
+	# print prev
+
 	s = 0
 	m = x2.shape[0]
+
+	print theta
+	
 	for i in range(m):
-		hyp = hypothesis(x,i,theta)
+		xi = x2[i:i+1].values[0]
+		hyp = hypothesis(xi,theta)
 		yi = y2[i:i+1].values[0]
-		# print int(hyp), yi,i
-		s += abs(int(hyp) - yi)
+		s += abs(absolute(hyp) - yi)
+	
 	print float(s)/float(m), m
+
