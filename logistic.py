@@ -2,13 +2,29 @@ import pandas as pd
 import numpy as np
 import math
 import time
+import scipy.optimize
+import scipy.special
+from scipy.optimize import fmin_bfgs
 
-alpha = 0.01
+alpha = 0.1
 lamda = 0.001
 e = 2.718281828459045235
 
-x = pd.read_csv('data/ex2data1.txt')
-x2 = pd.read_csv('data/ex2data2.txt')
+x = pd.read_csv('subtrain.csv', usecols=['Round', 'FNL1', 'FNL2', 'FSP.1',
+                                         'FSW.1', 'SSP.1', 'SSW.1', 'ACE.1', 'DBF.1', 'WNR.1', 'UFE.1', 'BPC.1', 'BPW.1', 'NPA.1', 'NPW.1', 'TPW.1',
+                                         'ST1.1', 'ST2.1', 'ST3.1', 'ST4.1', 'ST5.1', 'FSP.2', 'FSW.2', 'SSP.2', 'SSW.2', 'ACE.2', 'DBF.2', 'WNR.2',
+                                         'UFE.2', 'BPC.2', 'BPW.2', 'NPA.2', 'NPW.2', 'TPW.2', 'ST1.2', 'ST2.2', 'ST3.2', 'ST4.2', 'ST5.2'])
+
+x2 = pd.read_csv('subtest.csv', usecols=['Round', 'FNL1', 'FNL2', 'FSP.1',
+                                         'FSW.1', 'SSP.1', 'SSW.1', 'ACE.1', 'DBF.1', 'WNR.1', 'UFE.1', 'BPC.1', 'BPW.1', 'NPA.1', 'NPW.1', 'TPW.1',
+                                         'ST1.1', 'ST2.1', 'ST3.1', 'ST4.1', 'ST5.1', 'FSP.2', 'FSW.2', 'SSP.2', 'SSW.2', 'ACE.2', 'DBF.2', 'WNR.2',
+                                         'UFE.2', 'BPC.2', 'BPW.2', 'NPA.2', 'NPW.2', 'TPW.2', 'ST1.2', 'ST2.2', 'ST3.2', 'ST4.2', 'ST5.2'])
+
+y = pd.read_csv('subtrain.csv', usecols=['Result'])
+y2 = pd.read_csv('subtest.csv', usecols=['Result'])
+
+# x = pd.read_csv('data/ex2data1.txt')
+# x2 = pd.read_csv('data/ex2data2.txt')
 
 X = x.values[:, :-1]
 Y = x.values[:, -1]
@@ -25,16 +41,11 @@ def absolute(z):
 
 
 def sigmoid(z):
-    z = 1 / (1 + math.exp(-1.0 * z))
-    return z
+    return 1.0 / (1 + np.exp(-z))
 
 
-def hypothesis(xi, theta):
-
-    z = 0
-    for i in xrange(len(theta)):
-        z += xi[i] * theta[i]
-
+def hypothesis(X, theta):
+    z = X.dot(theta[1:])
     return sigmoid(z)
 
 
@@ -42,46 +53,45 @@ def cost(theta):
 
     J = 0
 
-    for i in range(m):
+    hyp = hypothesis(X, theta)
 
-        yi = Y[i]
-        xi = X[i]
-        hyp = hypothesis(xi, theta)
+    j = 0
+    for i in xrange(m):
+        j += (math.log(hyp[i]) * Y[i]) + ((1 - Y[i]) * math.log(1 - hyp[i]))
 
-        if yi == 1:
-            a = math.log(hyp) * yi + lamda / (2 * m) * \
-                np.sum(np.sum(x.values * x.values, axis=0), axis=0)
-        else:
-            a = (1 - yi) * math.log(1 - hyp) + lamda / (2 * m) * \
-                np.sum(np.sum(x.values * x.values, axis=0), axis=0)
+    J = - (j / m)
 
-        J += (a / m)
+    J = -J
+
+    # print J
 
     return J
 
 
 def gradient(theta):
-    l = np.zeros(X.shape[1], dtype=float)
+    dx = np.zeros(X.shape[1], dtype=float)
 
-    for i in range(m):
-        yi = Y[i]
-        xi = X[i]
-        hyp = hypothesis(xi, theta)
+    hyp = hypothesis(X, theta)
 
-        k = np.subtract(hyp, yi)
-        l = np.add(l, np.multiply(k, xi))
-        l = np.multiply(l, alpha)
+    # print (hyp-Y).shape,X.transpose().shape
+    dx = dx + X.transpose().dot((hyp - Y))
 
-    return l
+    # dx = dx + X.dot(hyp - Y)
+    dx = alpha * dx
+    # print dx
+
+    return dx
 
 
 def descent_momentum(theta, v, mu):
 
     dx = gradient(theta)
 
-    v = mu * v - dx + lamda / (m) * \
-        np.sum(np.sum(x.values, axis=0), axis=0)
+    v[0] = mu[0] * v[0]
+    v[1:] = (mu * v)[1:] - dx[:]
     theta += v
+
+    # print theta,v,mu
 
     return theta, v, mu
 
@@ -94,25 +104,26 @@ def adagrad(theta):
 
     cache += dx**2
 
-    theta += - dx / (np.sqrt(cache) + 1e-7) + lamda / (m) * \
-        np.sum(np.sum(x.values, axis=0), axis=0)
+    theta += - dx / (np.sqrt(cache) + 1e-7)
 
     return theta
 
 
-def main():
-    v = np.zeros(X.shape[1])
-    mu = np.zeros(X.shape[1])
+def logisitic():
+    # print X
+    v = np.zeros(X.shape[1]+1)
+    mu = np.zeros(X.shape[1]+1)
     mu.fill(0.5)
 
-    theta = np.random.randn(X.shape[1]) * 0.01
+    theta = np.zeros(X.shape[1]+1)
+    # theta.fill(0)
     a = 0
-    
+
     prev = cost(theta)
-    print "initial cost:", cost(theta)
+    # print "initial cost:", cost(theta)
     theta, v, mu = descent_momentum(theta, v, mu)
 
-    while prev - cost(theta) <= 0.00001:
+    while prev - cost(theta) >= 0.0000001:
         prev = cost(theta)
         theta, v, mu = descent_momentum(theta, v, mu)
 
@@ -126,9 +137,9 @@ def main():
 
             s += abs(absolute(hyp) - yi)
 
-        print "epoch: (", a, ") cost:", cost(theta)[0], \
+        print "epoch: (", a, ")",\
             "accuracy:", 1 - float(s) / float(m), "incorrect:", s[0]
-        
+
         a += 1
 
     print theta
