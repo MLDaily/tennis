@@ -40,4 +40,4 @@ s=0
 for i in range(len(y_pred)):
 	s += abs(absolute(y_pred[i]) - y2[i:i+1].values[0])
 
-print float(s)/float(m), m
+print 1-float(s)/float(m)
